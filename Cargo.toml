@@ -1,0 +1,12 @@
+[package]
+name = "file-sharing"
+version = "0.1.0"
+authors = ["Tommy Pujol <tommy@pujol.cf>"]
+edition = "2018"
+
+[dependencies]
+actix-web = "3"
+actix-multipart = "0.3"
+futures = "0.3.5"
+async-std = "1.8.0"
+sanitize-filename = "0.2"
