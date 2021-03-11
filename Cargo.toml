@@ -10,3 +10,4 @@ actix-multipart = "0.3"
 futures = "0.3.5"
 async-std = "1.8.0"
 sanitize-filename = "0.2"
+uuid = { version = "0.8.2", features = ["v4"] }

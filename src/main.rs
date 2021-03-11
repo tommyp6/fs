@@ -2,8 +2,11 @@ use actix_multipart::Multipart;
 use actix_web::{middleware, web, App, Error, HttpResponse, HttpServer};
 use async_std::prelude::*;
 use futures::{StreamExt, TryStreamExt};
+use uuid::Uuid;
 
 async fn save_file(mut payload: Multipart) -> Result<HttpResponse, Error> {
+    let mut fileurl = String::new();
+
     while let Ok(Some(mut field)) = payload.try_next().await {
         let content_type = field
             .content_disposition()
@@ -11,7 +14,16 @@ async fn save_file(mut payload: Multipart) -> Result<HttpResponse, Error> {
         let filename = content_type
             .get_filename()
             .ok_or_else(|| actix_web::error::ParseError::Incomplete)?;
-        let filepath = format!("/var/www/fs/{}", sanitize_filename::sanitize(&filename));
+
+        let filename = sanitize_filename::sanitize(&filename);
+        let file_id = Uuid::new_v4().to_string();
+
+        if fileurl.is_empty() {
+            fileurl = format!("/done/{}/{}", file_id, filename);
+        }
+
+        async_std::fs::create_dir_all(format!("/app/uploads/{}", file_id)).await?;
+        let filepath = format!("/app/uploads/{}/{}", file_id, filename);
         let mut f = async_std::fs::File::create(filepath).await?;
 
         while let Some(chunk) = field.next().await {
@@ -20,38 +32,25 @@ async fn save_file(mut payload: Multipart) -> Result<HttpResponse, Error> {
         }
     }
 
-    Ok(HttpResponse::Found().header("Location", "/done").finish())
+    Ok(HttpResponse::Found().header("Location", fileurl).finish())
 }
 
-async fn done() -> HttpResponse {
-    let html = r#"<html><head>
-    <title>File Uploaded</title>
-    <style>
-        html {
-margin: 0;
-top: 0;
-left: 0;
-background-color: #121212;
-color: #fff;
-}
+async fn done(param: web::Path<(String, String)>) -> HttpResponse {
+    let (file_id, filename) = param.into_inner();
+    let fileurl = format!("https://i.ghostplanet.live/{}/{}", file_id, filename);
 
-h1 {
-        text-align: center;
-}
-
-a {
-color: #50c878;
-}
-
-a:visited {
-color: #50c878;
-}
-        </style>
-        </head>
-        <body>
-        <h1>File successfully uploaded!</h1>
-        <h1><a href="/">Go back...</a></h1>
-"#;
+    let html = format!(
+        r##"<html><head><title>File Uploaded</title><link rel="stylesheet" href="https://ghostplanet.live/global.css"></head>
+<body>
+    <h1>File successfully uploaded!</h1>
+    <p>You can visit your uploaded file here:</p><br>
+    <a href="{}">{}</a><br>
+    <h1><a href="/">Go back...</a></h1>
+</body>
+</html>
+"##,
+        fileurl, fileurl
+    );
 
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
@@ -112,7 +111,7 @@ async fn main() -> std::io::Result<()> {
                     .route(web::get().to(index))
                     .route(web::post().to(save_file)),
             )
-            .service(web::resource("/done").route(web::get().to(done)))
+            .service(web::resource("/done/{file_id}/{filename}").route(web::get().to(done)))
     })
     .bind(ip)?
     .run()
