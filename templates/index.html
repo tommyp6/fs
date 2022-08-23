@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}File uploader{% endblock %}
+{% block content %}
+    <form action="/" method="post" enctype="multipart/form-data">
+        <input type="file" multiple name="file"/><br><br>
+        <button type="submit">Submit</button>
+    </form>
+{% endblock %}

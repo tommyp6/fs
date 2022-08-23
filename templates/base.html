@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>{% block title %}{% endblock %}</title>
+        <link rel="stylesheet" href="/static/main.css">
+    </head>
+    <body>
+        {% if _flashes  %}
+        {% for flash in _flashes %}
+        <div class="msg msg-{{ flash.kind }}">
+            {{ flash.msg }}
+        </div><br>
+        {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </body>
+</html>

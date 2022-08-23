@@ -1,0 +1,21 @@
+body {
+    background-color: peru;
+}
+
+.msg {
+    color: white;
+    margin: 5px;
+    padding: 15px;
+}
+
+.msg-OK {
+    background-color: #4BB543;
+}
+
+.msg-INFO {
+    background-color: #1E92F4;
+}
+
+.msg-ERROR {
+    background-color: #FF9494;
+}

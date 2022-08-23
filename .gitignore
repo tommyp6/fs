@@ -1,1 +1,3 @@
 /target
+uploads/
+!uploads/.gitkeep
