@@ -6,16 +6,21 @@ use actix_web::{
     middleware::{Logger, NormalizePath},
     web, App, HttpServer,
 };
+use dotenv::dotenv;
 use lazy_static::lazy_static;
 use tera::Tera;
 
+mod config;
 mod errors;
 mod handlers;
 mod router;
 mod session;
 
-// TODO: make site configs for session key, upload path, etc.
-static SESSION_SIGNING_KEY: &[u8] = &[0; 64];
+use crate::config::Config;
+
+lazy_static! {
+    pub static ref CONFIG: Config = Config::from_env();
+}
 
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
@@ -33,11 +38,17 @@ lazy_static! {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    dotenv().ok();
+
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
 
-    log::info!("Starting server at http://localhost:8080");
+    log::info!(
+        "Starting server at http://{}:{}",
+        CONFIG.host.clone(),
+        CONFIG.port
+    );
 
-    let key = actix_web::cookie::Key::from(SESSION_SIGNING_KEY);
+    let key = actix_web::cookie::Key::from(CONFIG.session_key.as_bytes());
 
     HttpServer::new(move || {
         let session_store = SessionMiddleware::builder(CookieSessionStore::default(), key.clone())
@@ -52,9 +63,9 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::default())
             .configure(router::register_handlers)
             .service(Files::new("/static", "static"))
-            .service(Files::new("/uploads", "uploads"))
+            .service(Files::new("/uploads", CONFIG.uploads_dir.clone()))
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind((CONFIG.host.clone(), CONFIG.port))?
     .run()
     .await
 }

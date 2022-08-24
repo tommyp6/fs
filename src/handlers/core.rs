@@ -1,11 +1,14 @@
-use crate::session::{flash, get_flash_messages, FlashKind, FlashMessage};
+use crate::{
+    session::{flash, get_flash_messages, FlashMessage},
+    CONFIG,
+};
 use actix_multipart::Multipart;
 use actix_session::Session;
 use actix_web::{error, web, Error, HttpRequest, HttpResponse, Responder, Result};
 use fs::{redirect, render_template};
-use futures_util::TryStreamExt as _;
-use std::io::Write;
+use futures_util::TryStreamExt;
 use tera::{Context, Tera};
+use tokio::io::AsyncWriteExt;
 use uuid::Uuid;
 
 type Response = Result<impl Responder, Error>;
@@ -15,6 +18,8 @@ pub async fn index(tera: web::Data<Tera>, session: Session) -> Response {
 }
 
 pub async fn upload_file(req: HttpRequest, mut payload: Multipart, session: Session) -> Response {
+    let mut has_flashed = false;
+
     while let Some(mut field) = payload.try_next().await? {
         let content_disposition = field.content_disposition();
 
@@ -22,18 +27,26 @@ pub async fn upload_file(req: HttpRequest, mut payload: Multipart, session: Sess
             .get_filename()
             .map_or_else(|| Uuid::new_v4().to_string(), sanitize_filename::sanitize);
 
-        let filepath = format!("uploads/{filename}");
+        let filepath = format!("{}/{filename}", CONFIG.uploads_dir);
 
-        // File::create is blocking operation, use threadpool
-        let mut f = web::block(|| std::fs::File::create(filepath)).await??;
+        if !has_flashed {
+            flash(
+                &session,
+                FlashMessage::ok_safe(format!(
+                    "Uploaded file to <a href=/{0}>{0}</a>",
+                    filepath.clone()
+                )),
+            )?;
+            has_flashed = true;
+        }
+
+        let mut f = tokio::fs::File::create(filepath).await?;
 
         while let Some(chunk) = field.try_next().await? {
-            // filesystem operations are blocking, we have to use threadpool
-            f = web::block(move || f.write_all(&chunk).map(|_| f)).await??;
+            // TODO: Report errors while writing to file.
+            f.write_all(&chunk).await?;
         }
     }
-
-    flash(&session, FlashMessage::new(FlashKind::OK, "Uploaded file!"))?;
 
     redirect!(req, "index")
 }

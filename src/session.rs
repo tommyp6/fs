@@ -16,13 +16,64 @@ pub enum FlashKind {
 pub struct FlashMessage {
     kind: FlashKind,
     msg: String,
+    is_safe: bool,
 }
 
+#[allow(dead_code)]
 impl FlashMessage {
-    pub fn new<S: Into<String>>(kind: FlashKind, msg: S) -> Self {
+    pub fn new<S: Into<String>>(kind: FlashKind, msg: S, is_safe: bool) -> Self {
         Self {
             kind,
             msg: msg.into(),
+            is_safe: is_safe,
+        }
+    }
+
+    pub fn ok<S: Into<String>>(msg: S) -> Self {
+        Self {
+            kind: FlashKind::OK,
+            msg: msg.into(),
+            is_safe: false,
+        }
+    }
+
+    pub fn ok_safe<S: Into<String>>(msg: S) -> Self {
+        Self {
+            kind: FlashKind::OK,
+            msg: msg.into(),
+            is_safe: true,
+        }
+    }
+
+    pub fn info<S: Into<String>>(msg: S) -> Self {
+        Self {
+            kind: FlashKind::INFO,
+            msg: msg.into(),
+            is_safe: false,
+        }
+    }
+
+    pub fn info_safe<S: Into<String>>(msg: S) -> Self {
+        Self {
+            kind: FlashKind::INFO,
+            msg: msg.into(),
+            is_safe: true,
+        }
+    }
+
+    pub fn error<S: Into<String>>(msg: S) -> Self {
+        Self {
+            kind: FlashKind::ERROR,
+            msg: msg.into(),
+            is_safe: false,
+        }
+    }
+
+    pub fn error_safe<S: Into<String>>(msg: S) -> Self {
+        Self {
+            kind: FlashKind::ERROR,
+            msg: msg.into(),
+            is_safe: true,
         }
     }
 }
