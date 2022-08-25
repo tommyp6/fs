@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ status_code }} - {{ error }}{% endblock %}
 {% block content %}
+<header class="error">
     <h1>{{ status_code }} - {{ error }}</h1>
+</header>
 {% endblock %}

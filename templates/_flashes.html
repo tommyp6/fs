@@ -1,0 +1,7 @@
+{% if _flashes  %}
+{% for flash in _flashes %}
+<div class="msg msg-{{ flash.kind }}">
+    {% if flash.is_safe == true %}{{ flash.msg | safe }}{% else %}{{ flash.msg }}{% endif %}
+</div><br>
+{% endfor %}
+{% endif %}

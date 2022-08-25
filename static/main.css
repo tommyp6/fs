@@ -1,7 +1,3 @@
-body {
-    background-color: peru;
-}
-
 .msg {
     color: white;
     margin: 5px;
@@ -17,5 +13,10 @@ body {
 }
 
 .msg-ERROR {
-    background-color: #FF9494;
+    background-color: #f23e3e;
+}
+
+a, a:visited {
+    color: #FE7F2D;
+    text-decoration: underline;
 }

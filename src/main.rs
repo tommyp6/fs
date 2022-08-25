@@ -3,7 +3,7 @@
 use actix_files::Files;
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{
-    middleware::{Logger, NormalizePath},
+    middleware::{Compress, Logger, NormalizePath},
     web, App, HttpServer,
 };
 use dotenv::dotenv;
@@ -59,6 +59,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(TEMPLATES.clone()))
             .wrap(errors::error_handler())
             .wrap(session_store)
+            .wrap(Compress::default())
             .wrap(NormalizePath::trim())
             .wrap(Logger::default())
             .configure(router::register_handlers)
