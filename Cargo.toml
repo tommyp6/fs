@@ -11,6 +11,7 @@ actix-files = "0.6.2"
 actix-session = { version = "0.7", features = ["cookie-session"] }
 actix-multipart = "0.4"
 sanitize-filename = "0.4"
+human_bytes = "0.3.1"
 env_logger = "0.9.0"
 lazy_static = "1.4.0"
 dotenv = "0.15.0"

@@ -1,7 +1,6 @@
 Goal
 =====
 
-*> Max file size
 *> File expiry
 *> Encrypt file client size [Optional]
 *> Users [Allow for custom roles (bigger upload size, file expiry, etc.) + admin stats dashboard]

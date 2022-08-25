@@ -13,10 +13,12 @@ use tera::Tera;
 mod config;
 mod errors;
 mod handlers;
+mod middleware;
 mod router;
 mod session;
 
 use crate::config::Config;
+use crate::middleware::ContentLengthChecker;
 
 lazy_static! {
     pub static ref CONFIG: Config = Config::from_env();
@@ -58,6 +60,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(TEMPLATES.clone()))
             .wrap(errors::error_handler())
+            .wrap(ContentLengthChecker::new())
             .wrap(session_store)
             .wrap(Compress::default())
             .wrap(NormalizePath::trim())

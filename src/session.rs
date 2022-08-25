@@ -5,14 +5,14 @@ use serde::{Deserialize, Serialize};
 const FLASH_KEY: &'static str = "_flash";
 
 #[allow(dead_code)]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum FlashKind {
     OK,
     INFO,
     ERROR,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct FlashMessage {
     kind: FlashKind,
     msg: String,
