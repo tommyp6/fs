@@ -1,6 +1,8 @@
 Goal
 =====
 
+*> UI - progress bar
+*> Upload to different endpoint to not freeze client (websockets?)
 *> File expiry
-*> Encrypt file client size [Optional]
+*> Encrypt file client side [Optional]
 *> Users [Allow for custom roles (bigger upload size, file expiry, etc.) + admin stats dashboard]
