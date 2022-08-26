@@ -78,6 +78,7 @@ impl FlashMessage {
     }
 }
 
+#[allow(dead_code)] // WIP: nojs version will use this
 pub fn flash(session: &Session, msg: FlashMessage) -> Result<()> {
     if let Some(mut flash_messages) = session.get::<Vec<FlashMessage>>(FLASH_KEY)? {
         flash_messages.push(msg);

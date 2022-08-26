@@ -20,3 +20,7 @@ a, a:visited {
     color: #FE7F2D;
     text-decoration: underline;
 }
+
+.bar {
+    width: 300px;
+}

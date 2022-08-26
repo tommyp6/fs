@@ -1,11 +1,8 @@
-use crate::{
-    session::{flash, get_flash_messages, FlashMessage},
-    CONFIG,
-};
+use crate::{session::get_flash_messages, CONFIG};
 use actix_multipart::Multipart;
 use actix_session::Session;
 use actix_web::{error, web, Error, HttpRequest, HttpResponse, Responder, Result};
-use fs::{redirect, render_template};
+use fs::render_template;
 use futures_util::TryStreamExt;
 use tera::{Context, Tera};
 use tokio::io::AsyncWriteExt;
@@ -17,8 +14,11 @@ pub async fn index(tera: web::Data<Tera>, session: Session) -> Response {
     render_template!(tera, &session, "index.html")
 }
 
-pub async fn upload_file(req: HttpRequest, mut payload: Multipart, session: Session) -> Response {
-    let mut has_flashed = false;
+pub async fn upload_file(_req: HttpRequest, mut payload: Multipart, _session: Session) -> Response {
+    // Deal with dup. files
+    // let mut has_flashed = false;
+
+    let mut filepath: Option<String> = None;
 
     while let Some(mut field) = payload.try_next().await? {
         let content_disposition = field.content_disposition();
@@ -27,20 +27,24 @@ pub async fn upload_file(req: HttpRequest, mut payload: Multipart, session: Sess
             .get_filename()
             .map_or_else(|| Uuid::new_v4().to_string(), sanitize_filename::sanitize);
 
-        let filepath = format!("{}/{filename}", CONFIG.uploads_dir);
+        let path = format!("{}/{filename}", CONFIG.uploads_dir);
 
-        if !has_flashed {
-            flash(
-                &session,
-                FlashMessage::ok_safe(format!(
-                    "Uploaded file to <a href=/{0}>{0}</a>",
-                    filepath.clone()
-                )),
-            )?;
-            has_flashed = true;
+        if !filepath.is_some() {
+            filepath = Some(path.clone());
         }
 
-        let mut f = tokio::fs::File::create(filepath).await?;
+        // if !has_flashed {
+        //     flash(
+        //         &session,
+        //         FlashMessage::ok_safe(format!(
+        //             "Uploaded file to <a href=/{0}>{0}</a>",
+        //             filepath.clone()
+        //         )),
+        //     )?;
+        //     has_flashed = true;
+        // }
+
+        let mut f = tokio::fs::File::create(path).await?;
 
         while let Some(chunk) = field.try_next().await? {
             // TODO: Report errors while writing to file.
@@ -48,5 +52,8 @@ pub async fn upload_file(req: HttpRequest, mut payload: Multipart, session: Sess
         }
     }
 
-    redirect!(req, "index")
+    let body = format!("Uploaded file to <a href=/{0}>{0}</a>", filepath.unwrap());
+    Ok(HttpResponse::Ok().content_type("text/plain").body(body))
+
+    //    redirect!(req, "index")
 }

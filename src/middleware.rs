@@ -1,16 +1,9 @@
-use crate::{
-    session::{flash, FlashMessage},
-    CONFIG,
-};
-use actix_session::SessionExt;
+use crate::CONFIG;
 use actix_web::{
     body::EitherBody,
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
-    http::{
-        header::{HeaderValue, LOCATION},
-        StatusCode,
-    },
-    Error, HttpResponse,
+    http::header::HeaderValue,
+    Error, HttpMessage, HttpResponse,
 };
 use futures_util::TryStreamExt;
 use human_bytes::human_bytes;
@@ -73,7 +66,7 @@ where
 
     forward_ready!(service);
 
-    fn call(&self, req: ServiceRequest) -> Self::Future {
+    fn call(&self, mut req: ServiceRequest) -> Self::Future {
         #[allow(non_snake_case)]
         let MAX_ALLOWED_CONTENT_LENGTH: u64 = CONFIG.max_file_size;
         let service = Rc::clone(&self.service);
@@ -94,24 +87,16 @@ where
 
         Box::pin(async move {
             // Drain body because of #2695. (https://github.com/actix/actix-web/issues/2695)
-            let (r, mut payload) = req.into_parts();
+            let mut payload = req.take_payload();
             while let Ok(Some(_)) = payload.try_next().await {}
-            let session = r.get_session();
 
-            flash(
-                &session,
-                FlashMessage::error(format!(
-                    "Your file exceeds the maximum file size of {}",
-                    human_bytes(MAX_ALLOWED_CONTENT_LENGTH as f64)
-                )),
-            )?;
-
-            let req = ServiceRequest::from_parts(r, payload);
-
-            let mut res = HttpResponse::new(StatusCode::FOUND);
-
-            res.headers_mut()
-                .insert(LOCATION, HeaderValue::from_static("/"));
+            let body = format!(
+                "Your file exceeds the maximum file size of {}",
+                human_bytes(MAX_ALLOWED_CONTENT_LENGTH as f64)
+            );
+            let res = HttpResponse::PayloadTooLarge()
+                .content_type("text/html")
+                .body(body);
 
             Ok(req.into_response(res.map_into_right_body()))
         })
